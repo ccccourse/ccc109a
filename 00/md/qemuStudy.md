@@ -155,7 +155,7 @@ operation with a single return instruction. Code concatenation would not work if
 
 ## 其他實作細節
 
-1 - 機器指令會被《跳曜指令》打斷分成很多《基本塊》，塊與塊之間的跳轉會需要修改 CPU 狀態，才能正確進行模擬，以下是其論文原文
+1 - 機器指令會被《跳曜指令》打斷分成很多《基本塊 TB》，塊與塊之間的跳轉會需要修改 CPU 狀態，才能正確進行模擬，以下是其論文原文
 
 > 3.1 Translated Blocks and Translation Cache
 > 
@@ -173,7 +173,7 @@ operation with a single return instruction. Code concatenation would not work if
 > 
 > The future versions of QEMU will use a dynamic temporary register allocator to eliminate some unnecessary moves in the case where the target registers are directly stored in host registers.
 
-3 - 跳曜條件使用 lazy evaluation 的方式，以下是其論文原文：
+3 - 跳曜條件使用 lazy evaluation 的方式才不會導致效能下降太多，以下是其論文原文：
 
 > 3.3 Condition code optimizations
 > 
@@ -188,4 +188,19 @@ CC_OP=CC_OP_ADDL
 > Knowing that we had a 32 bit addition from the constant stored in CC OP, we can recover A, B and R from CC SRC and CC DST. Then all the corresponding condition codes such as zero result (ZF), non-positive result (SF), carry (CF) or overflow (OF) can be recovered if
 they are needed by the next instructions.
 > The condition code evaluation is further optimized at translation time by using the fact that the code of a complete TB is generated at a time. A backward pass is done on the generated code to see if CC OP, CC SRC or CC DST are not used by the following code. At the end of TB we consider that these variables are used. Then we delete the assignments whose value is not used in the following code.
+
+4 - TB 區塊之間的連接方式，若跳轉時該區塊還沒載入，則先載入後再跳轉！
+
+> 3.4 Direct block chaining
+> 
+> After each TB is executed, QEMU uses the simulated Program Counter (PC) and the other information of the static CPU state to find the next TB using a hash table. If the next TB has not been already translated, then a new translation is launched. Otherwise, a jump to the next TB is done.
+> In order to accelerate the most common case where the new simulated PC is known (for example after a conditional jump), QEMU can patch a TB so that it jumps directly to the next one. The most portable code uses an indirect jump. On some hosts (such as x86 or PowerPC), a branch instruction is directly patched so that the block chaining has no overhead.
+
+5 - 使用 mmap() 來實作 MMU 記憶體管理單元的模擬
+
+> 3.5 Memory management
+> 
+> For system emulation, QEMU uses the mmap() system call to emulate the target MMU. It works as long as the emulated OS does not use an area reserved by the host OS.2
+> In order to be able to launch any OS, QEMU also supports a software MMU. In that mode, the MMU virtual to physical address translation is done at every memory access. QEMU uses an address translation cache to speed up the translation.
+
 
