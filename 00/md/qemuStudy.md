@@ -202,5 +202,22 @@ they are needed by the next instructions.
 > 
 > For system emulation, QEMU uses the mmap() system call to emulate the target MMU. It works as long as the emulated OS does not use an area reserved by the host OS.2
 > In order to be able to launch any OS, QEMU also supports a software MMU. In that mode, the MMU virtual to physical address translation is done at every memory access. QEMU uses an address translation cache to speed up the translation.
+> To avoid flushing the translated code each time the MMU mappings change, QEMU uses a physically indexed translation cache. It means that each TB is indexed with its physical address.
+> When MMU mappings change, the chaining of the TBs is reset (i.e. a TB can no longer jump directly to another one) because the physical address of the jump targets may change.
 
+6 - 如何處理《自我修改》的程式碼！ (這得令修改過的 TB 失效並重新翻譯) 
 
+> 3.6 Self-modifying code and translated code invalidation
+> 
+> On most CPUs, self-modifying code is easy to handle because a specific code cache invalidation instruction is executed to signal that code has been modified. It suffices to invalidate the corresponding translated code.
+> However on CPUs such as the x86, where no instruction cache invalidation is signaled by the application when code is modified, self-modifying code is a special challenge . When translated code is generated for a TB, the corresponding host page is write protected if it is not already read-only. If a write access is made to the page, then QEMU invalidates all the translated code in it and reenables write accesses to it.
+> Correct translated code invalidation is done efficiently by maintaining a linked list of every translated block contained in a given page. Other linked lists are also maintained to undo direct block chaining.
+> When using a software MMU, the code invalidation is more efficient: if a given code page is invalidated too often because of write accesses, then a bitmap representing all the code inside the page is built. Every store into that page checks the bitmap to see if the code really needs to be invalidated. It avoids invalidating the code when only data is modified in the page.
+
+7 - 例外處理 -- 使用 longjump() 跳到例外處理程式
+
+> 3.7 Exception support
+> 
+> longjmp() is used to jump to the exception handling code when an exception such as division by zero is encountered. When not using the software MMU, host signal handlers are used to catch the invalid memory accesses.
+> QEMU supports precise exceptions in the sense that it is always able to retrieve the exact target CPU state at the time the exception occurred. Nothing has to be done for most of the target CPU state because it is explicitly stored and modified by the translated code. The target CPU state S which is not explicitly stored (for example the current Program Counter) is retrieved by re-translating
+the TB where the exception occurred in a mode where S is recorded before each translated target instruction. The host program counter where the exception was raised is used to find the corresponding target instruction and the state S. 
