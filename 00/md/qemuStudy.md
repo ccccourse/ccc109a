@@ -153,3 +153,24 @@ operation with a single return instruction. Code concatenation would not work if
 
 還有必須考慮當一個函數有很多 return 時就不能單純用連接的方式將指令接起來等等細節！
 
+## 其他實作細節
+
+1 - 機器指令會被《跳曜指令》打斷分成很多《基本塊》，塊與塊之間的跳轉會需要修改 CPU 狀態，才能正確進行模擬，以下是其論文原文
+
+> 3.1 Translated Blocks and Translation Cache
+> 
+> When QEMU first encounters a piece of target code, it translates it to host code up to the next jump or instruction modifying the static CPU state in a way that cannot be deduced at translation time. We call these basic blocks Translated Blocks (TBs).
+> 
+> A 16 MByte cache holds the most recently used TBs. For simplicity, it is completely flushed when it is full.
+> 
+> The static CPU state is defined as the part of the CPU state that is considered as known at translation time when entering the TB. For example, the program counter (PC) is known at translation time on all targets. On x86, the static CPU state includes more data to be able to generate better code. It is important for example to know if the CPU is in protected or real mode, in user or kernel mode, or if the default operand size is 16 or 32 bits.
+
+2 - Qemu 使用固定暫存器分配的方式，以下是其論文原文
+
+> 3.2 Register allocation
+> 
+> QEMU uses a fixed register allocation. This means that each target CPU register is mapped to a fixed host register or memory address. On most hosts, we simply map all the target registers to memory and only store a few temporary variables in host registers. The allocation of the temporary variables is hard coded in each target CPU description. The advantage of this method is simplicity and portability.
+> 
+> The future versions of QEMU will use a dynamic temporary register allocator to eliminate some unnecessary moves in the case where the target registers are directly stored in host registers.
+
+
