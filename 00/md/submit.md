@@ -40,7 +40,7 @@
 例如： 
 
 * 案例 1: 陳鍾誠
-* 報告： [編譯器 qemu 研究](qemuStudy.md)
+* 報告： [QEMU 跨平台虛擬機原理解析](qemuStudy.md)
 
 
 ## 2 - 程式
