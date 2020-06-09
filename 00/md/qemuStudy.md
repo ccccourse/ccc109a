@@ -18,7 +18,7 @@ QEMU 是一種跨平台、跨處理器的虛擬機，可以在 x86 上模擬出 
 
 若我們用 qemu 在 powerPC 處理器上執行該指令時，會被翻譯成下列三條微指令：
 
-```
+```asm
 movl_T0_r1 # T0 = r1
 addl_T0_im -16 # T0 = T0 - 16
 movl_r1_T0 # r1 = T0
@@ -26,7 +26,7 @@ movl_r1_T0 # r1 = T0
 
 論文中說第一條微指令會翻譯成下列 C 語言呼叫。
 
-```
+```c
 void op_movl_T0_r1(void) {
   T0 = env->regs[1];
 }
@@ -34,7 +34,7 @@ void op_movl_T0_r1(void) {
 
 我猜測第二、三條微指令應該是翻譯成：
 
-```
+```c
 void add_T0_im(int num) {
   T0 = env->regs[1];
   T0 = T0 + num;
@@ -46,6 +46,10 @@ void op_movl_T0_r1(void) {
 }
 ```
 
+論文中說上述 C 語言程式中的 env 在 PowerPC 中應該對應到 32 個暫存器。
+
+> env is a structure containing the target CPU state. The 32 PowerPC registers are stored in the array env->regs[32].
+
 Fabrice Bellard 設計時刻意把微指令數量降得很低，該論文中說道：
 
 > The number of micro operations is minimized without impacting the quality of the generated code much. For example, instead of generating every possible move between every 32 PowerPC registers, we just generate moves to and from a few temporary registers. These registers T0, T1, T2 are typically stored in host registers by using the GCC static register variable extension.
@@ -54,9 +58,47 @@ Fabrice Bellard 設計時刻意把微指令數量降得很低，該論文中說�
 
 (改進想法：現在有 LLVM ，或許可以改翻成 LLVM IR 中間碼，然後由 llc 將中間碼轉為目標平台的指令，或者交由 lli 中間碼解譯器去執行也行)
 
+但是為了效能更快， op_addl_T0_im() 函數把常數參數放到全域變數中的 op_param1，而不是作為參數傳入，
+
+```c
+extern int __op_param1;
+void op_addl_T0_im(void)
+{
+T0 = T0 + ((long)(&__op_param1));
+}
+```
+
+QEMU 在翻譯指令時，會動態的將《來源平台的機器指令》翻譯成《目標平台的微指令》，以下是其程式片段：
 
 
+```
+[...]
+for(;;) {
+  switch(*opc_ptr++) {
+    [...]
+    case INDEX_op_movl_T0_r1:
+    {
+      extern void op_movl_T0_r1();
+      memcpy(gen_code_ptr, (char *)&op_movl_T0_r1+0, 3);
+      gen_code_ptr += 3;
+      break;
+    }
+    case INDEX_op_addl_T0_im:
+    {
+      long param1;
+      extern void op_addl_T0_im();
+      memcpy(gen_code_ptr, (char *)&op_addl_T0_im+0, 6);
+      param1 = *opparam_ptr++;
+      *(uint32_t *)(gen_code_ptr + 2) = param1;
+      gen_code_ptr += 6;
+      break;
+    }
+    [...]
+  }
+}
+[...]
 
+```
 
 
 
