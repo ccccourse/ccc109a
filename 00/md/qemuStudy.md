@@ -24,11 +24,37 @@ addl_T0_im -16 # T0 = T0 - 16
 movl_r1_T0 # r1 = T0
 ```
 
+論文中說第一條微指令會翻譯成下列 C 語言呼叫。
+
+```
+void op_movl_T0_r1(void) {
+  T0 = env->regs[1];
+}
+```
+
+我猜測第二、三條微指令應該是翻譯成：
+
+```
+void add_T0_im(int num) {
+  T0 = env->regs[1];
+  T0 = T0 + num;
+  env->regs[1] = T0
+}
+
+void op_movl_T0_r1(void) {
+  env->regs[1] = T0;
+}
+```
+
 Fabrice Bellard 設計時刻意把微指令數量降得很低，該論文中說道：
 
 > The number of micro operations is minimized without impacting the quality of the generated code much. For example, instead of generating every possible move between every 32 PowerPC registers, we just generate moves to and from a few temporary registers. These registers T0, T1, T2 are typically stored in host registers by using the GCC static register variable extension.
 
-這樣就可以把暫存器安排的任務交給 gcc ，而不用由 QEMU 來考慮複雜的指令優化功能。
+這樣就可以把暫存器的安排與優化等任務交給 gcc ，降低 qemu 的實作負擔。 
+
+(改進想法：現在有 LLVM ，或許可以改翻成 LLVM IR 中間碼，然後由 llc 將中間碼轉為目標平台的指令，或者交由 lli 中間碼解譯器去執行也行)
+
+
 
 
 
