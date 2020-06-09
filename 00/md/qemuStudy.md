@@ -1,4 +1,4 @@
-# QEMU 研究報告
+# QEMU 跨平台虛擬機研究報告
 
 ```
 作者：陳鍾誠
@@ -196,7 +196,7 @@ they are needed by the next instructions.
 > After each TB is executed, QEMU uses the simulated Program Counter (PC) and the other information of the static CPU state to find the next TB using a hash table. If the next TB has not been already translated, then a new translation is launched. Otherwise, a jump to the next TB is done.
 > In order to accelerate the most common case where the new simulated PC is known (for example after a conditional jump), QEMU can patch a TB so that it jumps directly to the next one. The most portable code uses an indirect jump. On some hosts (such as x86 or PowerPC), a branch instruction is directly patched so that the block chaining has no overhead.
 
-5 - 使用 mmap() 來實作 MMU 記憶體管理單元的模擬
+5 - 使用 mmap() 來實作 MMU 記憶體管理單元的模擬 (將 MMU 軟體化)
 
 > 3.5 Memory management
 > 
@@ -221,3 +221,29 @@ they are needed by the next instructions.
 > longjmp() is used to jump to the exception handling code when an exception such as division by zero is encountered. When not using the software MMU, host signal handlers are used to catch the invalid memory accesses.
 > QEMU supports precise exceptions in the sense that it is always able to retrieve the exact target CPU state at the time the exception occurred. Nothing has to be done for most of the target CPU state because it is explicitly stored and modified by the translated code. The target CPU state S which is not explicitly stored (for example the current Program Counter) is retrieved by re-translating
 the TB where the exception occurred in a mode where S is recorded before each translated target instruction. The host program counter where the exception was raised is used to find the corresponding target instruction and the state S. 
+
+8 - 硬體中斷模擬 : 
+
+> 3.8 Hardware interrupts
+> 
+> In order to be faster, QEMU does not check at every TB if an hardware interrupt is pending. Instead, the user must asynchronously call a specific function to tell that an interrupt is pending. This function resets the chaining of the currently executing TB. It ensures that the execution will return soon in the main loop of the CPU emulator. Then the main loop tests if an interrupt is pending and handles it.
+
+這段有點看不懂，硬體中斷等待期間，必須由使用者呼叫一個《非同步的函數》 (the user must asynchronously call a specific function to tell that an interrupt is pending) ??
+
+9 - 使用者模式模擬 : 使用者模式不需要《軟體 MMU》，因為那是 OS 負責的。
+
+> 3.9 User mode emulation
+> 
+> QEMU supports user mode emulation in order to run a Linux process compiled for one target CPU on another CPU. At the CPU level, user mode emulation is just a subset of the full system emulation. No MMU simulation is done because QEMU supposes the user memory mappings are handled by the host OS. QEMU includes a generic Linux system call converter to handle endianness issues and 32/64 bit conversions. Because QEMU supports exceptions, it emulates the target signals exactly. Each target thread is run in one host thread.
+
+## 論文結尾
+
+該論文結尾另外討論了下列主題
+
+* 移植 QEMU 需要移植的程式碼為哪些？
+* QEMU 的效能評估！ (大約比原生機器碼執行慢四倍)
+
+結論：作者認為寫論文當時 QEMU 已經達到《可日常使用》的程度，但對於《各種平台的移植、除錯模式的支援、軟體 MMU 的效能改進》等都還有不少事情要做！
+
+
+
