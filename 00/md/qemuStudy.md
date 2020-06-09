@@ -1,5 +1,7 @@
 # QEMU 研究報告
 
+> 本報告的節錄內容主要來源為 -- [QEMU, a Fast and Portable Dynamic Translator (PDF)](https://www.usenix.org/legacy/event/usenix05/tech/freenix/full_papers/bellard/bellard.pdf)Fabrice Bellard.
+
 編譯器 qemu 的初始創作者是 [Fabrice Bellard](https://bellard.org/) ，以下是他的作品網頁：
 
 * https://bellard.org/
