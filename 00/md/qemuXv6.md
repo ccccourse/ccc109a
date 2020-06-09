@@ -1,4 +1,4 @@
-# QEMU 安裝
+# QEMU 安裝與使用
 
 * https://www.qemu.org/download/#windows
 
