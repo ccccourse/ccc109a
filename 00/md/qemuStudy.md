@@ -173,4 +173,19 @@ operation with a single return instruction. Code concatenation would not work if
 > 
 > The future versions of QEMU will use a dynamic temporary register allocator to eliminate some unnecessary moves in the case where the target registers are directly stored in host registers.
 
+3 - 跳曜條件使用 lazy evaluation 的方式，以下是其論文原文：
+
+> 3.3 Condition code optimizations
+> 
+> Good CPU condition code emulation (eflags register on x86) is a critical point to get good performances. QEMU uses lazy condition code evaluation: instead of computing the condition codes after each x86 instruction, it just stores one operand (called CC SRC), the result (called CC DST) and the type of operation (called CC OP). For a 32 bit addition such as R = A + B, we have:
+
+```
+CC_SRC=A
+CC_DST=R
+CC_OP=CC_OP_ADDL
+```
+
+> Knowing that we had a 32 bit addition from the constant stored in CC OP, we can recover A, B and R from CC SRC and CC DST. Then all the corresponding condition codes such as zero result (ZF), non-positive result (SF), carry (CF) or overflow (OF) can be recovered if
+they are needed by the next instructions.
+> The condition code evaluation is further optimized at translation time by using the fact that the code of a complete TB is generated at a time. A backward pass is done on the generated code to see if CC OP, CC SRC or CC DST are not used by the following code. At the end of TB we consider that these variables are used. Then we delete the assignments whose value is not used in the following code.
 
