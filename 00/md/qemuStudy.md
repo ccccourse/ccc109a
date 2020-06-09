@@ -155,7 +155,7 @@ operation with a single return instruction. Code concatenation would not work if
 
 ## 其他實作細節
 
-1 - 機器指令會被《跳曜指令》打斷分成很多《基本塊 TB》，塊與塊之間的跳轉會需要修改 CPU 狀態，才能正確進行模擬，以下是其論文原文
+1 - 機器指令會被《跳曜指令》打斷分成很多《翻譯基本塊 TB》，塊與塊之間的跳轉會需要修改 CPU 狀態，才能正確進行模擬，以下是其論文原文
 
 > 3.1 Translated Blocks and Translation Cache
 > 
