@@ -1,0 +1,5 @@
+'aaa123bbb'.match(/[0-9]+/)
+'aaa123bbb'.match(/[a-z]+/)
+'tel: 082-313534 email:ccc@nqu.edu.tw department: csie'.match(/[0-9\-]+/)
+'tel: 082-313534 email:ccc@nqu.edu.tw department: csie'.match(/[\d\-]+/)
+'tel: 082-313534 email:ccc@nqu.edu.tw department: csie'.match(/email:([\w+\.@])/)
