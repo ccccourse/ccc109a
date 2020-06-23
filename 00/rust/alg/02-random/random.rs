@@ -19,7 +19,7 @@ fn main() {
         .expect("Time went backwards");
     SEED = since_the_epoch.as_secs() * 1000 + since_the_epoch.subsec_nanos() as u64 / 1_000_000;
   }
-  for _i in 1..100 {
+  for _i in 1..10 {
     println!("{}", random());
   }
 }

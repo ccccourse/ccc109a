@@ -1,5 +1,27 @@
-# 機率推論 (Probability & Inference)
+# 機率方法
 
+* [random.rs](random.rs)
+
+```
+user@DESKTOP-96FRN6B MINGW64 /d/ccc/ccc109a/00/rust/alg/02-random (master)
+$ rustc random.rs
+
+user@DESKTOP-96FRN6B MINGW64 /d/ccc/ccc109a/00/rust/alg/02-random (master)
+$ ./random
+0.07405884869513102
+0.9389893749048497
+0.4570944266306469
+0.944862953692791
+0.8998819236439886
+0.8406192129477859
+0.30447256336628925
+0.27544164993742015
+0.013597523095086217
+
+```
+
+
+<!--
 ## Naive Bayes Algorithm
 
 P(x)=0.5
@@ -105,3 +127,4 @@ prob=0.040319999999999995 path=["N","V","N"]
 ```
 
 
+-->
